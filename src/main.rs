@@ -53,8 +53,10 @@ pub enum Commands {
     /// Fully clear the .basalt folder
     DistClean,
     /// Generate build files, build the project and run a target by name
+	#[command(trailing_var_arg = true, allow_hyphen_values = true)]
     Run {
         target: String,
+        args: Vec<String>,
     },
 }
 
@@ -95,7 +97,7 @@ fn configure(targets: &Vec<Target>, cli: &Cli) {
     let _ = CompileCommandsGenerator::new().generate(&targets);
 }
 
-fn build(targets: &Vec<Target>, cli: &Cli) {
+fn build(_targets: &Vec<Target>, cli: &Cli) {
 	log::info!("building");
 	    
 	let threads = num_cpus::get();
@@ -113,18 +115,8 @@ fn build(targets: &Vec<Target>, cli: &Cli) {
             GeneratorChoice::Ninja => vec!["-t".to_string(), "clean".to_string()],
             GeneratorChoice::Make => vec!["clean".to_string()],
         },
-        Some(Commands::Run { target }) => {
-            let target_exists = targets.iter().any(|t| match t {
-                Target::Executable(exec) => &exec.name == target,
-                Target::Library(_) => false,
-            });
-
-            if !target_exists {
-                log::error!("target executable '{}' not found in configuration.", target);
-                std::process::exit(1);
-            }
-
-            vec![target.clone()]
+        Some(Commands::Run { target: _, args: _ }) => {
+            vec!["all".to_string(), format!("-j{}", threads)]
         },
         Some(Commands::DistClean) => unreachable!()
     };
@@ -145,12 +137,13 @@ fn build(targets: &Vec<Target>, cli: &Cli) {
 
 
 fn run(_targets: &Vec<Target>, cli: &Cli) {
-	if let Some(Commands::Run { target }) = &cli.command {
+    if let Some(Commands::Run { target, args }) = &cli.command {
         log::info!("running target: {}", target);
         
         let target_binary_path = format!("./.basalt/{}", target); 
 
         let run_status = Command::new(&target_binary_path)
+            .args(args)
             .status()
             .expect("Failed to execute target binary");
 

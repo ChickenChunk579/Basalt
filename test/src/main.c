@@ -4,7 +4,7 @@
 #include "foo.h"
 #include "bar.h"
 
-int main(void)
+int main(int argc, char** argv)
 {
     const int screenWidth = 800;
     const int screenHeight = 450;
