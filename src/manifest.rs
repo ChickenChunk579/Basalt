@@ -93,6 +93,7 @@ fn parse_common(target_obj: &HashMap<String, JsValue>) -> CommonFields {
 	if let Some(JsValue::String(n)) = target_obj.get("name") {
 		name = n.clone();
 	}
+	
 
 	let mut sources = Vec::new();
 	let mut dependencies = Vec::new();
@@ -107,6 +108,16 @@ fn parse_common(target_obj: &HashMap<String, JsValue>) -> CommonFields {
 	let mut ar = String::new();
 
 	if let Some(JsValue::Object(opts)) = target_obj.get("options") {
+		let extract_string = |map: &HashMap<String, JsValue>, key: &str| -> String {
+		match map.get(key) {
+				Some(JsValue::String(s)) => s.clone(),
+				_ => String::new(),
+			}
+		};
+	
+		c_standard = extract_string(opts, "cStandard");
+		cxx_standard = extract_string(opts, "cxxStandard");
+	
 		if let Some(JsValue::Array(items)) = opts.get("sources") {
 			sources = items
 				.iter()
@@ -160,14 +171,7 @@ fn parse_common(target_obj: &HashMap<String, JsValue>) -> CommonFields {
 		}
 
 		if let Some(JsValue::Object(toolchain_fields)) = opts.get("toolchain") {
-			let extract_string = |map: &HashMap<String, JsValue>, key: &str| -> String {
-				match map.get(key) {
-					Some(JsValue::String(s)) => s.clone(),
-					_ => String::new(),
-				}
-			};
-			c_standard = extract_string(toolchain_fields, "cStandard");
-			cxx_standard = extract_string(toolchain_fields, "cxxStandard");
+			
 			cc = extract_string(toolchain_fields, "cc");
 			cxx = extract_string(toolchain_fields, "cxx");
 			ld = extract_string(toolchain_fields, "ld");
