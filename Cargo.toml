@@ -1,0 +1,17 @@
+[package]
+name = "basalt"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+chrono = "0.4.45"
+clap = { version = "4.6.5", features = ["derive"] }
+env_logger = "0.11.11"
+glob = "0.3.4"
+log = "0.4.33"
+num_cpus = "1.17.0"
+pkg-config = "0.3.33"
+quick-js = "0.4.1"
+serde_json = "1.0.151"
+sha2 = "0.11.0"
+which = "8.0.5"
