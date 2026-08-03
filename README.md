@@ -1,3 +1,9 @@
+# Basalt
+Basalt is a basic build system that uses QuickJS
+
+To get started, create a file called `basalt.config.js` in the root of your project.
+You can start with something like:
+```js
 function build(b) { // b is a Builder Context. All of the Basalt api is exposed through this
 	const clang = b.toolchain({ // A toolchain is compilers, linkers and other tools
 		cc: b.findProgram("clang"), // Find program looks for a program in path
@@ -41,3 +47,9 @@ function build(b) { // b is a Builder Context. All of the Basalt api is exposed 
     return [hello, foo, bar]; // All targets that should be built must be returned
                               // Order doesnt matter, dependency tree will be resolved.
 }
+
+```
+
+Now, you can run `basalt` to build your project.
+To run a target after building, use `basalt run {target}`
+Additionally, add `basalt -g {make,ninja} ...` to specifically use make or ninja

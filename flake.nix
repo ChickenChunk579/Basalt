@@ -25,5 +25,14 @@
 			export PATH=$PATH:$PWD/target/debug
           '';
         };
+
+        packages.default = pkgs.rustPlatform.buildRustPackage {
+          pname = "basalt";
+          version = "0.1.0";
+
+          src = pkgs.lib.cleanSource ./.;
+
+          cargoLock.lockFile = ./Cargo.lock;
+        };
       });
 }
