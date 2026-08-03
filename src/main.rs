@@ -14,9 +14,32 @@ use std::env;
 use chrono::Local;
 use quick_js::{Context, console::LogConsole};
 use log;
-
+use std::path::Path;
+use std::collections::HashMap;
 use cli::{Cli, Commands};
 use clap::Parser;
+
+
+fn load_option_cache(path: &Path) -> HashMap<String, String> {
+    let mut map = HashMap::new();
+    if let Ok(contents) = fs::read_to_string(path) {
+        for line in contents.lines() {
+            if let Some((k, v)) = line.split_once('=') {
+                map.insert(k.to_string(), v.to_string());
+            }
+        }
+    }
+    map
+}
+
+fn save_option_cache(path: &Path, map: &HashMap<String, String>) {
+    let mut out = String::new();
+    for (k, v) in map {
+        out.push_str(&format!("{}={}\n", k, v));
+    }
+    let _ = fs::create_dir_all(path.parent().unwrap());
+    let _ = fs::write(path, out);
+}
 
 fn main() {
     env_logger::builder()
@@ -35,6 +58,20 @@ fn main() {
         .init();
 
     let mut cli = Cli::parse();
+
+    let cache_path = Path::new(".basalt/options.cache");
+    let mut cached = load_option_cache(cache_path);
+    
+    for opt in &cli.options {
+        if let Some((k, v)) = opt.split_once('=') {
+            cached.insert(k.to_string(), v.to_string());
+        }
+    }
+    
+    save_option_cache(cache_path, &cached);
+
+	cli.options = cached.into_iter().map(|(k, v)| format!("{}={}", k, v)).collect();
+    
 
     if matches!(cli.command, Some(Commands::DistClean)) {
         log::info!("deleting local .basalt...");
