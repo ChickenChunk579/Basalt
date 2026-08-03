@@ -13,8 +13,8 @@ pub fn generate_library_ninja(lib: &Library) -> std::io::Result<()> {
 	let ld_cmd = resolve_ld_command(&lib.ccld, &lib.ld);
 
 	content.push_str("# Toolchain\n");
-	content.push_str(&format!("cc = {}\n", lib.cc));
-	content.push_str(&format!("cxx = {}\n", lib.cxx));
+	content.push_str(&format!("cc = {} -std={}\n", lib.cc, lib.c_standard));
+	content.push_str(&format!("cxx = {} -std={}\n", lib.cxx, lib.cxx_standard));
 	content.push_str(&format!("ld = {}\n\n", ld_cmd));
 	content.push_str(&format!("ar = {}\n\n", lib.ar));
 

@@ -13,8 +13,8 @@ pub fn generate_library_makefile(lib: &Library) -> std::io::Result<()> {
 	let ld_cmd = resolve_ld_command(&lib.ccld, &lib.ld);
 
 	content.push_str("# Toolchain\n");
-	content.push_str(&format!("{}_CC := {}\n", name, lib.cc));
-	content.push_str(&format!("{}_CXX := {}\n", name, lib.cxx));
+	content.push_str(&format!("{}_CC := {} -std={}\n", name, lib.cc, lib.c_standard));
+	content.push_str(&format!("{}_CXX := {} -std={}\n", name, lib.cxx, lib.cxx_standard));
 	content.push_str(&format!("{}_LD := {}\n", name, ld_cmd));
 	content.push_str(&format!("{}_AR := {}\n\n", name, lib.ar));
 

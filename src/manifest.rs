@@ -17,6 +17,8 @@ struct CommonFields {
 	dependencies: Vec<Dependency>,
 	include_directories: Vec<String>,
 	define: Vec<String>,
+	cxx_standard: String,
+	c_standard: String,
 	cc: String,
 	ccld: String,
 	cxx: String,
@@ -59,6 +61,8 @@ fn parse_target(target_obj: HashMap<String, JsValue>) -> Option<Target> {
 				dependencies: common.dependencies,
 				include_directories: common.include_directories,
 				define: common.define,
+				cxx_standard: common.cxx_standard,
+				c_standard: common.c_standard,
 				cc: common.cc,
 				ccld: common.ccld,
 				cxx: common.cxx,
@@ -73,6 +77,8 @@ fn parse_target(target_obj: HashMap<String, JsValue>) -> Option<Target> {
 			dependencies: common.dependencies,
 			include_directories: common.include_directories,
 			define: common.define,
+			cxx_standard: common.cxx_standard,
+			c_standard: common.c_standard,
 			cc: common.cc,
 			ccld: common.ccld,
 			cxx: common.cxx,
@@ -92,6 +98,8 @@ fn parse_common(target_obj: &HashMap<String, JsValue>) -> CommonFields {
 	let mut dependencies = Vec::new();
 	let mut include_directories = Vec::new();
 	let mut define = Vec::new();
+	let mut cxx_standard = String::new();
+	let mut c_standard = String::new();
 	let mut cc = String::new();
 	let mut cxx = String::new();
 	let mut ccld = String::new();
@@ -158,6 +166,8 @@ fn parse_common(target_obj: &HashMap<String, JsValue>) -> CommonFields {
 					_ => String::new(),
 				}
 			};
+			c_standard = extract_string(toolchain_fields, "cStandard");
+			cxx_standard = extract_string(toolchain_fields, "cxxStandard");
 			cc = extract_string(toolchain_fields, "cc");
 			cxx = extract_string(toolchain_fields, "cxx");
 			ld = extract_string(toolchain_fields, "ld");
@@ -166,5 +176,18 @@ fn parse_common(target_obj: &HashMap<String, JsValue>) -> CommonFields {
 		}
 	}
 
-	CommonFields { name, sources, dependencies, include_directories, define, cc, cxx, ccld, ld, ar }
+	CommonFields {
+		name,
+		sources,
+		dependencies,
+		include_directories,
+		define,
+		c_standard,
+		cxx_standard,
+		cc,
+		cxx,
+		ccld,
+		ld,
+		ar
+	}
 }

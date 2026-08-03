@@ -13,8 +13,8 @@ pub fn generate_executable_makefile(exec: &Executable) -> std::io::Result<()> {
 	let ld_cmd = resolve_ld_command(&exec.ccld, &exec.ld);
 
 	content.push_str("# Toolchain\n");
-	content.push_str(&format!("{}_CC := {}\n", name, exec.cc));
-	content.push_str(&format!("{}_CXX := {}\n", name, exec.cxx));
+	content.push_str(&format!("{}_CC := {} -std={}\n", name, exec.cc, exec.c_standard));
+	content.push_str(&format!("{}_CXX := {} -std={}\n", name, exec.cxx, exec.cxx_standard));
 	content.push_str(&format!("{}_LD := {}\n", name, ld_cmd));
 	content.push_str(&format!("{}_AR := {}\n\n", name, exec.ar));
 

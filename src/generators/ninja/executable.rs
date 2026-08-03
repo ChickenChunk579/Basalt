@@ -13,8 +13,8 @@ pub fn generate_executable_ninja(exec: &Executable) -> std::io::Result<()> {
 	let ld_cmd = resolve_ld_command(&exec.ccld, &exec.ld);
 
 	content.push_str("# Toolchain\n");
-	content.push_str(&format!("cc = {}\n", exec.cc));
-	content.push_str(&format!("cxx = {}\n", exec.cxx));
+	content.push_str(&format!("cc = {} -std={}\n", exec.cc, exec.c_standard));
+	content.push_str(&format!("cxx = {} -std={}\n", exec.cxx, exec.cxx_standard));
 	content.push_str(&format!("ld = {}\n\n", ld_cmd));
 
 	let dep_cflags: Vec<String> = exec.dependencies.iter()
