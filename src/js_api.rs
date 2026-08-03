@@ -202,6 +202,16 @@ pub fn register(context: &Context, cli: Option<&Cli>) {
 					return b.toolchain({
 				        cc: b.findProgram("clang"),
 				        cxx: b.findProgram("clang++"),
+   				        ccld: b.findProgram("clang"),
+				        ld: b.findProgramOr(["mold", "ld.lld", "ld"]),
+				        ar: b.findProgram("ar")
+				    });
+				},
+				clangCxx: (b) => {
+					return b.toolchain({
+				        cc: b.findProgram("clang"),
+				        cxx: b.findProgram("clang++"),
+				        ccld: b.findProgram("clang++"),
 				        ld: b.findProgramOr(["mold", "ld.lld", "ld"]),
 				        ar: b.findProgram("ar")
 				    });

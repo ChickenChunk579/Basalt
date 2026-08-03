@@ -10,7 +10,7 @@ pub fn generate_executable_makefile(exec: &Executable) -> std::io::Result<()> {
 	let mut content = String::new();
 	let name = &exec.name;
 
-	let ld_cmd = resolve_ld_command(&exec.cc, &exec.ld);
+	let ld_cmd = resolve_ld_command(&exec.ccld, &exec.ld);
 
 	content.push_str("# Toolchain\n");
 	content.push_str(&format!("{}_CC := {}\n", name, exec.cc));

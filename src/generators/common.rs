@@ -1,18 +1,18 @@
 use std::fs;
 use std::path::Path;
 
-pub fn resolve_ld_command(cc: &str, ld: &str) -> String {
+pub fn resolve_ld_command(ccld: &str, ld: &str) -> String {
 	let ld_name = Path::new(ld)
 		.file_name()
 		.and_then(|s| s.to_str())
 		.unwrap_or(ld);
 
 	match ld_name {
-		"mold" => format!("{} -fuse-ld=mold", cc),
-		"ld.lld" | "lld" => format!("{} -fuse-ld=lld", cc),
-		"ld.bfd" | "bfd" => format!("{} -fuse-ld=bfd", cc),
-		"ld.gold" | "gold" => format!("{} -fuse-ld=gold", cc),
-		_ => cc.to_string(),
+		"mold" => format!("{} -fuse-ld=mold", ccld),
+		"ld.lld" | "lld" => format!("{} -fuse-ld=lld", ccld),
+		"ld.bfd" | "bfd" => format!("{} -fuse-ld=bfd", ccld),
+		"ld.gold" | "gold" => format!("{} -fuse-ld=gold", ccld),
+		_ => ccld.to_string(),
 	}
 }
 

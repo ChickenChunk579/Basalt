@@ -10,7 +10,7 @@ pub fn generate_library_ninja(lib: &Library) -> std::io::Result<()> {
 	let mut content = String::new();
 	let name = &lib.name;
 
-	let ld_cmd = resolve_ld_command(&lib.cc, &lib.ld);
+	let ld_cmd = resolve_ld_command(&lib.ccld, &lib.ld);
 
 	content.push_str("# Toolchain\n");
 	content.push_str(&format!("cc = {}\n", lib.cc));

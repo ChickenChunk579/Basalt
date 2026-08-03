@@ -18,6 +18,7 @@ struct CommonFields {
 	include_directories: Vec<String>,
 	define: Vec<String>,
 	cc: String,
+	ccld: String,
 	cxx: String,
 	ld: String,
 	ar: String,
@@ -59,6 +60,7 @@ fn parse_target(target_obj: HashMap<String, JsValue>) -> Option<Target> {
 				include_directories: common.include_directories,
 				define: common.define,
 				cc: common.cc,
+				ccld: common.ccld,
 				cxx: common.cxx,
 				ld: common.ld,
 				ar: common.ar,
@@ -72,6 +74,7 @@ fn parse_target(target_obj: HashMap<String, JsValue>) -> Option<Target> {
 			include_directories: common.include_directories,
 			define: common.define,
 			cc: common.cc,
+			ccld: common.ccld,
 			cxx: common.cxx,
 			ld: common.ld,
 			ar: common.ar,
@@ -91,6 +94,7 @@ fn parse_common(target_obj: &HashMap<String, JsValue>) -> CommonFields {
 	let mut define = Vec::new();
 	let mut cc = String::new();
 	let mut cxx = String::new();
+	let mut ccld = String::new();
 	let mut ld = String::new();
 	let mut ar = String::new();
 
@@ -158,8 +162,9 @@ fn parse_common(target_obj: &HashMap<String, JsValue>) -> CommonFields {
 			cxx = extract_string(toolchain_fields, "cxx");
 			ld = extract_string(toolchain_fields, "ld");
 			ar = extract_string(toolchain_fields, "ar");
+			ccld = extract_string(toolchain_fields, "ccld");
 		}
 	}
 
-	CommonFields { name, sources, dependencies, include_directories, define, cc, cxx, ld, ar }
+	CommonFields { name, sources, dependencies, include_directories, define, cc, cxx, ccld, ld, ar }
 }

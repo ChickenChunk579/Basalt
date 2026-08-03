@@ -9,6 +9,7 @@ pub struct Library {
 	pub include_directories: Vec<String>,
 	pub define: Vec<String>,
 	pub cc: String,
+	pub ccld: String,
 	pub cxx: String,
 	pub ld: String,
 	pub ar: String,
