@@ -1,7 +1,7 @@
 use std::fs;
-use std::path::Path;
 use crate::manifest::Target;
 use crate::generators::Generator;
+use crate::generators::common::object_name_for;
 
 pub struct CompileCommandsGenerator {}
 
@@ -32,16 +32,8 @@ fn json_string_array(items: &[String]) -> String {
 	format!("[{}]", quoted.join(", "))
 }
 
-fn obj_name_for(src: &str) -> String {
-	let file_name = Path::new(src)
-		.file_name()
-		.and_then(|s| s.to_str())
-		.unwrap_or(src);
-	file_name.strip_suffix(".c").unwrap_or(file_name).to_string() + ".o"
-}
-
 fn make_entry(root: &str, target_name: &str, src: &str, args: Vec<String>) -> String {
-	let obj_path = format!(".basalt/targets/{}/{}", target_name, obj_name_for(src));
+	let obj_path = format!(".basalt/targets/{}/{}", target_name, object_name_for(src));
 	let mut full_args = args;
 	full_args.push(src.to_string());
 	full_args.push("-o".to_string());

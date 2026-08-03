@@ -37,6 +37,7 @@ pub fn parse_targets(result: JsValue) -> Vec<Target> {
 	targets
 }
 
+
 fn parse_target(target_obj: HashMap<String, JsValue>) -> Option<Target> {
 	let kind = match target_obj.get("kind") {
 		Some(JsValue::String(k)) => k.clone(),

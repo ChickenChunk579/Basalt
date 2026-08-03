@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use quick_js::{Context, JsValue};
 use log;
 
-use crate::dependency::{Dependency, resolve_dependency_pkgconf};
+use crate::dependency::{Dependency, resolve_dependency_pkgconf, resolve_bedrock_package};
 
 pub fn register(context: &Context) {
 	context.add_callback("__api_toolchain", |toolchain: HashMap<String, JsValue>| {
@@ -22,32 +22,61 @@ pub fn register(context: &Context) {
 	}).unwrap();
 
 	context.add_callback("__api_dependency", |name: String| {
-		if let Some(pkgconf_dependency) = resolve_dependency_pkgconf(name.clone()) {
-			log::info!("found {} via pkgconf", name);
-			log::info!("  cflags: {}", pkgconf_dependency.cflags);
-			log::info!("  ldflags: {}", pkgconf_dependency.ldflags);
-
-			let mut dep_obj = HashMap::new();
-			dep_obj.insert("cflags".to_string(), JsValue::String(pkgconf_dependency.cflags));
-			dep_obj.insert("ldflags".to_string(), JsValue::String(pkgconf_dependency.ldflags));
-
-			JsValue::Object(dep_obj)
-		} else {
-			log::warn!("unable to find dependency {}", name);
-			log::warn!("directly linking.");
-			log::warn!("if this is intentional, use b.systemLib(name)");
-
-			let mut dep_obj = HashMap::new();
-			dep_obj.insert("cflags".to_string(), JsValue::String("".to_string()));
-			dep_obj.insert("ldflags".to_string(), JsValue::String(format!("-l{}", name)));
-
-			log::info!("found {} (direct link)", name);
-			log::info!("  cflags: ");
-			log::info!("  ldflags: -l{}", name);
-
-			JsValue::Object(dep_obj)
-		}
+	    if let Some((pkg_name, pkg_lib)) = name.split_once("::") {
+	        if let Some(dep) =
+	            resolve_bedrock_package(pkg_name.to_string(), pkg_lib.to_string())
+	        {
+	            log::info!("found {}::{} (bedrock packages)", pkg_name, pkg_lib);
+	            log::info!("  cflags: {}", dep.cflags);
+	            log::info!("  ldflags: {}", dep.ldflags);
+	
+	            let mut dep_obj = HashMap::new();
+	            dep_obj.insert("cflags".to_string(), JsValue::String(dep.cflags));
+	            dep_obj.insert("ldflags".to_string(), JsValue::String(dep.ldflags));
+	
+	            return JsValue::Object(dep_obj);
+	        } else {
+	            panic!("no package called {}", pkg_name);
+	        }
+	    }
+	    
+	    if let Some(pkgconf_dependency) = resolve_dependency_pkgconf(name.clone()) {
+	        log::info!("found {} via pkgconf", name);
+	        log::info!("  cflags: {}", pkgconf_dependency.cflags);
+	        log::info!("  ldflags: {}", pkgconf_dependency.ldflags);
+	
+	        let mut dep_obj = HashMap::new();
+	        dep_obj.insert(
+	            "cflags".to_string(),
+	            JsValue::String(pkgconf_dependency.cflags),
+	        );
+	        dep_obj.insert(
+	            "ldflags".to_string(),
+	            JsValue::String(pkgconf_dependency.ldflags),
+	        );
+	
+	        JsValue::Object(dep_obj)
+	    } else {
+	        log::warn!("unable to find dependency {}", name);
+	        log::warn!("directly linking.");
+	        log::warn!("if this is intentional, use b.systemLib(name)");
+	
+	        let mut dep_obj = HashMap::new();
+	        dep_obj.insert("cflags".to_string(), JsValue::String(String::new()));
+	        dep_obj.insert(
+	            "ldflags".to_string(),
+	            JsValue::String(format!("-l{}", name)),
+	        );
+	
+	        log::info!("found {} (direct link)", name);
+	        log::info!("  cflags: ");
+	        log::info!("  ldflags: -l{}", name);
+	
+	        JsValue::Object(dep_obj)
+	    }
 	}).unwrap();
+
+
 
 	context.add_callback("__api_find_program", |name: String| {
 		log::info!("finding {}...", name);
@@ -107,7 +136,19 @@ pub fn register(context: &Context) {
 			library: (name, options) => __api_library(name, options),
 			findProgram: (name) => __api_find_program(name),
 			findProgramOr: (options) => __api_find_program_or(options),
-			systemLib: (name) => __api_system_lib(name)
+			systemLib: (name) => __api_system_lib(name),
+			package: (pkg_name, pkg_lib) => __api_package(pkg_name, pkg_lib),
+
+			toolchains: {
+				clang: (b) => {
+					return b.toolchain({
+				        cc: b.findProgram("clang"),
+				        cxx: b.findProgram("clang++"),
+				        ld: b.findProgramOr(["mold", "ld.lld", "ld"]),
+				        ar: b.findProgram("ar")
+				    });
+				}
+			}
 		};
 	"#).unwrap();
 }
@@ -122,24 +163,29 @@ fn build_target_obj(name: String, opts: HashMap<String, JsValue>, kind: &str) ->
 
 	if kind == "library" {
 		let is_static = match opts.get("isStatic") {
-			Some(JsValue::Bool(b)) => *b,
-			_ => true,
+		    Some(JsValue::Bool(b)) => *b,
+		    _ => true,
 		};
 		res_obj.insert("isStatic".to_string(), JsValue::Bool(is_static));
-
+		
 		let mut cflags = String::new();
 		if let Some(JsValue::Array(include_dirs)) = opts.get("includeDirectories") {
-			let formatted_dirs: Vec<String> = include_dirs
-				.iter()
-				.filter_map(|val| match val {
-					JsValue::String(s) => Some(format!("-I$(SOURCES_ROOT)/{}", s)),
-					_ => None,
-				})
-				.collect();
-			cflags = formatted_dirs.join(" ");
+		    let formatted_dirs: Vec<String> = include_dirs
+		        .iter()
+		        .filter_map(|val| match val {
+		            JsValue::String(s) => Some(format!("-I$(SOURCES_ROOT)/{}", s)),
+		            _ => None,
+		        })
+		        .collect();
+		    cflags = formatted_dirs.join(" ");
 		}
-
-		let ldflags = format!("-l{}", name);
+		
+		let mut ldflags = format!("-L$(SOURCES_ROOT)/.basalt -l{}", name);
+		
+		if !is_static {
+		    ldflags.push_str("");
+		}
+		
 		res_obj.insert("cflags".to_string(), JsValue::String(cflags));
 		res_obj.insert("ldflags".to_string(), JsValue::String(ldflags));
 	}
