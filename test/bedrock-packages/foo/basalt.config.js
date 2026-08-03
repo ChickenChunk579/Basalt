@@ -6,7 +6,7 @@ function buildFoo(b) {
 		sources: b.glob("src/**/*.c"),
 		dependencies: [raylib],
 		toolchain: clang,
-		isStatic: false,
+		isStatic: true,
 		includeDirectories: ["src/"],
     	define: []
 	});

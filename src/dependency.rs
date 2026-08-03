@@ -51,7 +51,7 @@ pub fn resolve_bedrock_package(pkg_name: String, pkg_lib: String) -> Option<Depe
     }
 
     let context = Context::new().expect("Failed to initialize QuickJS");
-    crate::js_api::register(&context);
+    crate::js_api::register(&context, None);
 
     let config = fs::read_to_string(&config_path).ok()?;
 

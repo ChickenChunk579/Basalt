@@ -9,12 +9,10 @@ mod generators;
 
 use std::fs;
 use std::io::Write;
-use std::path::Path;
 use std::process::Command;
 use std::env;
 use chrono::Local;
-use quick_js::Context;
-use sha2::{Sha256, Digest};
+use quick_js::{Context, console::LogConsole};
 use log;
 
 use cli::{Cli, Commands};
@@ -38,12 +36,10 @@ fn main() {
 
     let mut cli = Cli::parse();
 
-    // 1. Intercept DistClean early, but handle packages before exiting
     if matches!(cli.command, Some(Commands::DistClean)) {
         log::info!("deleting local .basalt...");
         let _ = fs::remove_dir_all(".basalt");
 
-        // Recursively trigger DistClean on all bedrock packages
         if let Ok(entries) = fs::read_dir("bedrock-packages") {
             let current_exe = env::current_exe().unwrap();
 
@@ -72,8 +68,8 @@ fn main() {
         }
     }
 
-    let context = Context::new().expect("Failed to initialize QuickJS");
-    js_api::register(&context);
+    let context = Context::builder().console(LogConsole).build().expect("Failed to initialize QuickJS");
+    js_api::register(&context, Some(&cli));
 
     log::info!("building dependencies...");
     build::build_deps();
@@ -81,49 +77,14 @@ fn main() {
     let config = fs::read_to_string("./basalt.config.js")
         .expect("Unable to read basalt.config.js");
 
-    let hash_hex: String = Sha256::digest(config.as_bytes())
-        .iter()
-        .map(|b| format!("{:02x}", b))
-        .collect();
-
-    let sha_stamp = Path::new(".basalt/sha256");
-    let mut should_configure = true;
-
-    if sha_stamp.is_file() {
-        let old_sha = fs::read_to_string(sha_stamp)
-                .expect("Unable to read sha stamp?");
-
-        if old_sha == hash_hex {
-            should_configure = false;
-        }
-    } else {
-        log::info!("first configure");
-    }
-
-    if !should_configure {
-        log::set_max_level(log::LevelFilter::Warn);
-    }
-
     context.eval(&config).unwrap();
     let result = context.eval("build(globalThis.b);").unwrap();
 
     let targets = manifest::parse_targets(result);
-
-    if should_configure {
-        build::configure(&targets, &cli);
-    } else {
-        log::set_max_level(log::LevelFilter::Debug);
-    }
+    
+    build::configure(&targets, &cli);
 
     build::build(&targets, &cli);
-
-    if should_configure {
-        if let Some(parent) = sha_stamp.parent() {
-            fs::create_dir_all(parent).unwrap();
-        }
-        fs::write(sha_stamp, &hash_hex).unwrap();
-        log::info!("Configuration state saved successfully.");
-    }
 
     build::run(&targets, &cli);
 }

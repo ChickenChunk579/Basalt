@@ -1,10 +1,67 @@
 use std::collections::HashMap;
 use quick_js::{Context, JsValue};
 use log;
+use crate::Cli;
+
 
 use crate::dependency::{Dependency, resolve_dependency_pkgconf, resolve_bedrock_package};
 
-pub fn register(context: &Context) {
+pub enum OptionValue {
+    Integer(i32),
+    Float(f64),
+    Boolean(bool),
+    String(String),
+    None,
+}
+
+fn parse_value(raw: &str) -> OptionValue {
+    if raw == "null" || raw == "undefined" {
+        return OptionValue::None;
+    }
+
+    if let Ok(boolean) = raw.parse::<bool>() {
+        return OptionValue::Boolean(boolean);
+    }
+
+    if let Ok(number) = raw.parse::<i32>() {
+        return OptionValue::Integer(number);
+    }
+
+    if let Ok(float) = raw.parse::<f64>() {
+        return OptionValue::Float(float);
+    }
+
+    OptionValue::String(raw.to_string())
+}
+
+fn get_option(cli: Option<&Cli>, name: String, default: String) -> OptionValue {
+    if let Some(cli) = cli {
+        for option in &cli.options {
+            if let Some((key, value)) = option.split_once('=') {
+                if key == name {
+                    return parse_value(value);
+                }
+            }
+        }
+    }
+
+    parse_value(&default)
+}
+
+
+pub fn register(context: &Context, cli: Option<&Cli>) {
+	let cli_options = cli.cloned();
+	
+    context.add_callback("__api_option", move |name: String, default: String| {
+        match get_option(cli_options.as_ref(), name, default) {
+            OptionValue::Integer(value) => JsValue::Int(value),
+            OptionValue::Float(value) => JsValue::Float(value),
+            OptionValue::Boolean(value) => JsValue::Bool(value),
+            OptionValue::String(value) => JsValue::String(value),
+            OptionValue::None => JsValue::Null,
+        }
+    }).unwrap();
+	
 	context.add_callback("__api_toolchain", |toolchain: HashMap<String, JsValue>| {
 		JsValue::Object(toolchain)
 	}).unwrap();
@@ -138,7 +195,8 @@ pub fn register(context: &Context) {
 			findProgramOr: (options) => __api_find_program_or(options),
 			systemLib: (name) => __api_system_lib(name),
 			package: (pkg_name, pkg_lib) => __api_package(pkg_name, pkg_lib),
-
+			option: (name, def) => __api_option(name, def),
+			
 			toolchains: {
 				clang: (b) => {
 					return b.toolchain({

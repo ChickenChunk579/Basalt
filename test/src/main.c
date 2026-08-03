@@ -1,8 +1,14 @@
 #include <stdio.h>
 #include "raylib.h"
 #include "hello.h"
+
+#ifdef FOO_ON
 #include "foo.h"
+#endif
+
+#ifdef BAR_ON
 #include "bar.h"
+#endif
 
 int main(int argc, char** argv)
 {
@@ -14,8 +20,13 @@ int main(int argc, char** argv)
     SetTargetFPS(60);
 
 	printf("HELLO is: %s\n", HELLO);
+#ifdef FOO_ON
 	foo();
+#endif
+
+#ifdef BAR_ON
 	bar();
+#endif
 
     while (!WindowShouldClose())
     {

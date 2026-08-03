@@ -6,7 +6,7 @@ pub enum GeneratorChoice {
     Make,
 }
 
-#[derive(Parser, Debug)]
+#[derive(Parser, Debug, Clone)]
 #[command(name = "basalt", version, about = "A clean, simple and fast build system")]
 pub struct Cli {
     #[arg(
@@ -17,6 +17,16 @@ pub struct Cli {
     )]
     pub generator: Option<GeneratorChoice>,
 
+    /// Build options (-Okey=value)
+    #[arg(
+        short = 'O',
+        value_name = "KEY=VALUE",
+        global = true,
+        action = clap::ArgAction::Append,
+        allow_hyphen_values = true
+    )]
+    pub options: Vec<String>,
+
     #[command(subcommand)]
     pub command: Option<Commands>,
 }
@@ -25,10 +35,13 @@ pub struct Cli {
 pub enum Commands {
     /// Generate build files and build the project
     Build,
-    /// Clean generated artifacts, like object files and output files, from the build directory
+
+    /// Clean generated artifacts
     Clean,
+
     /// Fully clear the .basalt folder
     DistClean,
+
     /// Generate build files, build the project and run a target by name
     #[command(trailing_var_arg = true, allow_hyphen_values = true)]
     Run {
